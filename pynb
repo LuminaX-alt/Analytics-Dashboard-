@@ -1,0 +1,229 @@
+!pip install plotly pandas sqlite3
+import sqlite3
+import sqlite3
+
+conn = sqlite3.connect('smart_clinic.db')
+cursor = conn.cursor()
+
+# Create the table (adjust column types as needed)
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS diagnosis_records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    patient_id TEXT,
+    patient_name TEXT,
+    disease TEXT,
+    doctor_name TEXT,
+    date TEXT
+)
+''')
+
+conn.commit()
+conn.close()
+
+print("diagnosis_records table created successfully.")
+conn = sqlite3.connect('smart_clinic.db')
+cursor = conn.cursor()
+
+cursor.execute('''
+INSERT INTO diagnosis_records (patient_id, patient_name, disease, doctor_name, date)
+VALUES (?, ?, ?, ?, ?)
+''', ("P001", "John Doe", "Diabetes", "Dr. Smith", "2025-05-15"))
+
+conn.commit()
+conn.close()
+conn = sqlite3.connect('smart_clinic.db')
+cursor = conn.cursor()
+
+cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+tables = cursor.fetchall()
+
+print("Available Tables:")
+for table in tables:
+    print(table[0])
+!pip install gradio
+import sqlite3
+import pandas as pd
+import plotly.express as px
+import gradio as gr
+
+def generate_analytics():
+    conn = sqlite3.connect('smart_clinic.db')
+
+    # Patients Diagnosed per Disease
+    query1 = '''
+    SELECT disease, COUNT(*) as patient_count
+    FROM diagnosis_records
+    GROUP BY disease
+    '''
+    df_disease_count = pd.read_sql_query(query1, conn)
+    fig1 = px.bar(df_disease_count, x='disease', y='patient_count', title='Patients Diagnosed per Disease')
+
+    # Top 5 Most Common Diseases
+    top5_df = df_disease_count.sort_values(by='patient_count', ascending=False).head(5)
+    fig2 = px.pie(top5_df, names='disease', values='patient_count', title='Top 5 Most Common Diseases')
+
+    # Doctor Performance
+    query2 = '''
+    SELECT doctor_name, COUNT(*) as patients_treated
+    FROM diagnosis_records
+    GROUP BY doctor_name
+    '''
+    df_doctor = pd.read_sql_query(query2, conn)
+    fig3 = px.bar(df_doctor, x='doctor_name', y='patients_treated', title='Doctor Performance')
+
+    # Monthly Billing Summary
+    query3 = '''
+    SELECT strftime('%Y-%m', date) as month, SUM(amount) as total_billed
+    FROM billing
+    GROUP BY month
+    ORDER BY month
+    '''
+    df_billing = pd.read_sql_query(query3, conn)
+    fig4 = px.line(df_billing, x='month', y='total_billed', title='Monthly Billing Summary')
+
+    conn.close()
+
+    return fig1, fig2, fig3, fig4
+
+# Gradio Interface
+with gr.Blocks() as dashboard:
+    gr.Markdown("## 📊 Smart Clinic Analytics Dashboard")
+
+    with gr.Row():
+        plot1 = gr.Plot(label="Patients Diagnosed per Disease")
+        plot2 = gr.Plot(label="Top 5 Most Common Diseases")
+
+    with gr.Row():
+        plot3 = gr.Plot(label="Doctor Performance")
+        plot4 = gr.Plot(label="Monthly Billing Summary")
+
+    refresh_button = gr.Button("🔄 Refresh Analytics")
+    refresh_button.click(generate_analytics, outputs=[plot1, plot2, plot3, plot4])
+
+dashboard.launch()
+import sqlite3
+
+conn = sqlite3.connect('smart_clinic.db')
+cursor = conn.cursor()
+
+# Create diagnosis_records table
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS diagnosis_records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    patient_id TEXT,
+    patient_name TEXT,
+    disease TEXT,
+    doctor_name TEXT,
+    date TEXT
+)
+''')
+
+# Insert dummy diagnosis data
+diagnosis_data = [
+    ("P001", "Alice", "Diabetes", "Dr. Smith", "2025-04-10"),
+    ("P002", "Bob", "Pneumonia", "Dr. Lee", "2025-04-12"),
+    ("P003", "Charlie", "Diabetes", "Dr. Smith", "2025-04-15"),
+    ("P004", "Diana", "COVID-19", "Dr. John", "2025-04-16"),
+    ("P005", "Eve", "Hypertension", "Dr. Lee", "2025-04-18"),
+    ("P006", "Frank", "COVID-19", "Dr. Smith", "2025-04-20"),
+    ("P007", "Grace", "Diabetes", "Dr. Lee", "2025-05-01"),
+    ("P008", "Hank", "Pneumonia", "Dr. Smith", "2025-05-03"),
+    ("P009", "Ivy", "Hypertension", "Dr. John", "2025-05-05"),
+]
+
+cursor.executemany('''
+INSERT INTO diagnosis_records (patient_id, patient_name, disease, doctor_name, date)
+VALUES (?, ?, ?, ?, ?)
+''', diagnosis_data)
+
+# Create billing table
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS billing (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    patient_id TEXT,
+    amount INTEGER,
+    date TEXT
+)
+''')
+
+# Insert dummy billing data
+billing_data = [
+    ("P001", 1500, "2025-04-10"),
+    ("P002", 2500, "2025-04-12"),
+    ("P003", 1500, "2025-04-15"),
+    ("P004", 1800, "2025-04-16"),
+    ("P005", 2200, "2025-04-18"),
+    ("P006", 1800, "2025-04-20"),
+    ("P007", 1500, "2025-05-01"),
+    ("P008", 2500, "2025-05-03"),
+    ("P009", 2200, "2025-05-05"),
+]
+
+cursor.executemany('''
+INSERT INTO billing (patient_id, amount, date)
+VALUES (?, ?, ?)
+''', billing_data)
+
+conn.commit()
+conn.close()
+
+print("✅ Dummy data inserted successfully.")
+import sqlite3
+import pandas as pd
+import plotly.express as px
+import gradio as gr
+
+def generate_analytics():
+    conn = sqlite3.connect('smart_clinic.db')
+
+    # 1. Patients Diagnosed per Disease
+    query1 = '''
+    SELECT disease, COUNT(*) as patient_count
+    FROM diagnosis_records
+    GROUP BY disease
+    '''
+    df_disease_count = pd.read_sql_query(query1, conn)
+    fig1 = px.bar(df_disease_count, x='disease', y='patient_count', title='Patients Diagnosed per Disease')
+
+    # 2. Top 5 Most Common Diseases
+    top5_df = df_disease_count.sort_values(by='patient_count', ascending=False).head(5)
+    fig2 = px.pie(top5_df, names='disease', values='patient_count', title='Top 5 Most Common Diseases')
+
+    # 3. Doctor Performance
+    query2 = '''
+    SELECT doctor_name, COUNT(*) as patients_treated
+    FROM diagnosis_records
+    GROUP BY doctor_name
+    '''
+    df_doctor = pd.read_sql_query(query2, conn)
+    fig3 = px.bar(df_doctor, x='doctor_name', y='patients_treated', title='Doctor Performance')
+
+    # 4. Monthly Billing Summary
+    query3 = '''
+    SELECT strftime('%Y-%m', date) as month, SUM(amount) as total_billed
+    FROM billing
+    GROUP BY month
+    ORDER BY month
+    '''
+    df_billing = pd.read_sql_query(query3, conn)
+    fig4 = px.line(df_billing, x='month', y='total_billed', title='Monthly Billing Summary')
+
+    conn.close()
+    return fig1, fig2, fig3, fig4
+
+# Gradio Interface
+with gr.Blocks() as dashboard:
+    gr.Markdown("## 📊 Smart Clinic Analytics Dashboard")
+
+    with gr.Row():
+        plot1 = gr.Plot(label="Patients Diagnosed per Disease")
+        plot2 = gr.Plot(label="Top 5 Most Common Diseases")
+
+    with gr.Row():
+        plot3 = gr.Plot(label="Doctor Performance")
+        plot4 = gr.Plot(label="Monthly Billing Summary")
+
+    refresh_button = gr.Button("🔄 Refresh Analytics")
+    refresh_button.click(generate_analytics, outputs=[plot1, plot2, plot3, plot4])
+
+dashboard.launch()
